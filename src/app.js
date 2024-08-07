@@ -2,7 +2,9 @@ import express from "express";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import path from "path";
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 import UsuariosClientesRoutes from './routes/GestionUsuarios/UsuariosClientes.Routes.js';
 import proveedoresRoutes from './routes/GestionProveedores/Proveedores.routes.js';
@@ -15,13 +17,18 @@ import domiciliosRoutes from './routes/GestionDomicilios/domicilios.routes.js';
 const app = express();
 
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: process.env.FRONTEND_URL,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     credentials: true
 }));
 
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(cookieParser());
+
+app.get("/",(req,res)=>{
+    res.send("Api funcionando");
+})
 
 app.use('/api', UsuariosClientesRoutes);
 app.use('/api', proveedoresRoutes);
@@ -31,13 +38,13 @@ app.use('/api', formaPagosRoutes);
 app.use('/api', ventasRoutes);
 app.use('/api', domiciliosRoutes);
 
-// Servir archivos estáticos desde la carpeta 'public'
-const __dirname = path.resolve();
-app.use(express.static(path.join(__dirname, 'public')));
+// // Servir archivos estáticos desde la carpeta 'public'
+// const __dirname = path.resolve();
+// app.use(express.static(path.join(__dirname, 'public')));
 
-// Ruta catch-all para servir index.html
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+// // Ruta catch-all para servir index.html
+// app.get('*', (req, res) => {
+//     res.sendFile(path.join(__dirname, 'public', 'index.html'));
+// });
 
 export default app;
