@@ -38,7 +38,10 @@ export const registroGeneral = (rol) => {
         rol,
       };
       const token = createAccesToken(datosUsuarios);
-      res.cookie("token", token);
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: true,
+      });
       console.log(token);
       res.status(201).json(datosUsuarios);
     } catch (error) {
@@ -88,7 +91,10 @@ export const loginUsuariosClientes = async (req, res) => {
       [token, fecha, rows[0].idusuarios]
     );
 
-    res.cookie("token", token);
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+    });
     res.status(201).json(datosUsuarios);
     //Creamos la conexion
   } catch (error) {
@@ -122,51 +128,74 @@ export const getUsuarios = async (req, res) => {
   }
 };
 
-export const getIdUsuarios = async (req,res)=>{
+export const getIdUsuarios = async (req, res) => {
   try {
-      const { id } = req.params;
-      const query= `
+    const { id } = req.params;
+    const query = `
        SELECT * FROM usuarios WHERE idusuarios = ?
-      `
-      const [ rows ] = await pool.query(query,[id])
-      if(rows.length <= 0){
-        return res.status(404).json({message:"No existe el usuario"})
-      }
-     res.json(rows[0]);      
+      `;
+    const [rows] = await pool.query(query, [id]);
+    if (rows.length <= 0) {
+      return res.status(404).json({ message: "No existe el usuario" });
+    }
+    res.json(rows[0]);
   } catch (error) {
     console.log({ error: error.message });
     console.log("Error de la funcion getUsuarios");
   }
-}
+};
 
 export const updateUsuarios = async (req, res) => {
   try {
-    const { rol, nombre, apellido, email, DNI, telefono, username, password } = req.body;
+    const { rol, nombre, apellido, email, DNI, telefono, username, password } =
+      req.body;
     const UpdateHasheadPassword = await bcrypt.hash(password, 10);
     const { id } = req.params;
 
-    const userFound = await pool.query("SELECT * FROM usuarios WHERE idusuarios = ?",[id])
+    const userFound = await pool.query(
+      "SELECT * FROM usuarios WHERE idusuarios = ?",
+      [id]
+    );
     let passwordFound = userFound[0][0].password;
-    
+
     const query = `
     UPDATE usuarios SET rol = ?, nombre = ?, apellido = ?, email = ?, DNI = ?, telefono = ?,
     username = ?, password = ? WHERE idusuarios = ?
-   `
-    if(password === passwordFound){
-     const values = [rol, nombre, apellido, email, DNI, telefono, username, password,id];
-     const [ rows ] = await pool.query(query,values);
- 
-     if (rows.affectedRows === 0) {
-       res.status(404).json({ error: "No se contro el usuario a actualizar" });
-     }
-    }else{
-      
-     const values = [rol, nombre, apellido, email, DNI, telefono, username, UpdateHasheadPassword,id];
-     const [ rows ] = await pool.query(query,values);
- 
-     if (rows.affectedRows === 0) {
-       res.status(404).json({ error: "No se contro el usuario a actualizar" });
-     }
+   `;
+    if (password === passwordFound) {
+      const values = [
+        rol,
+        nombre,
+        apellido,
+        email,
+        DNI,
+        telefono,
+        username,
+        password,
+        id,
+      ];
+      const [rows] = await pool.query(query, values);
+
+      if (rows.affectedRows === 0) {
+        res.status(404).json({ error: "No se contro el usuario a actualizar" });
+      }
+    } else {
+      const values = [
+        rol,
+        nombre,
+        apellido,
+        email,
+        DNI,
+        telefono,
+        username,
+        UpdateHasheadPassword,
+        id,
+      ];
+      const [rows] = await pool.query(query, values);
+
+      if (rows.affectedRows === 0) {
+        res.status(404).json({ error: "No se contro el usuario a actualizar" });
+      }
     }
 
     const [rowsSelect] = await pool.query(
